@@ -188,6 +188,9 @@
         }
       }
     },
+    "Ce profil est déjà utilisé par un autre joueur dans la partie." : {
+
+    },
     "Classement final" : {
       "localizations" : {
         "en" : {
@@ -277,6 +280,9 @@
           }
         }
       }
+    },
+    "Nom déjà utilisé" : {
+
     },
     "Nom du joueur" : {
       "localizations" : {

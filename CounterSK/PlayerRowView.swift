@@ -1,5 +1,9 @@
-// PlayerRowView.swift
-// Extracted player row UI from ContentView for clarity
+//
+//  PlayerRowView.swift
+//  CounterSK
+//
+//  Created by Jonathan LOQUET on 05/01/2026.
+//
 
 import SwiftUI
 import SwiftData
@@ -349,6 +353,8 @@ fileprivate struct BonusModalView: View {
                 Button(NSLocalizedString("Appliquer", comment: "Apply")) {
                     item.extraBonus = computedTotal
                     try? modelContext.save()
+                    // Reset local selections after applying
+                    bonusCounts = [:]
                     isPresented = false
                 }
                 .buttonStyle(.borderedProminent)
@@ -382,13 +388,14 @@ fileprivate struct BonusModalView: View {
         }
         .padding()
         .onAppear {
-            if bonusCounts[skullKingBonus.key] == nil { bonusCounts[skullKingBonus.key] = 0 }
-            if bonusCounts[pirateBonus.key] == nil { bonusCounts[pirateBonus.key] = 0 }
-            if bonusCounts[sirenBonus.key] == nil { bonusCounts[sirenBonus.key] = 0 }
-            if bonusCounts["14 jaune"] == nil { bonusCounts["14 jaune"] = 0 }
-            if bonusCounts["14 violet"] == nil { bonusCounts["14 violet"] = 0 }
-            if bonusCounts["14 vert"] == nil { bonusCounts["14 vert"] = 0 }
-            if bonusCounts["14 noir"] == nil { bonusCounts["14 noir"] = 0 }
+            // Reset all selections to 0 each time the modal opens
+            bonusCounts[skullKingBonus.key] = 0
+            bonusCounts[pirateBonus.key] = 0
+            bonusCounts[sirenBonus.key] = 0
+            bonusCounts["14 jaune"] = 0
+            bonusCounts["14 violet"] = 0
+            bonusCounts["14 vert"] = 0
+            bonusCounts["14 noir"] = 0
         }
     }
 }

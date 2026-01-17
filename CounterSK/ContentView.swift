@@ -11,6 +11,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [SortDescriptor(\Item.order)]) private var items: [Item]
+    @Query(sort: [SortDescriptor(\PlayerProfile.lastPlayedAt, order: .reverse)]) private var profiles: [PlayerProfile]
     @Environment(\.editMode) private var editMode
     @Environment(\.dismiss) private var dismiss
 
@@ -226,6 +227,31 @@ struct ContentView: View {
                         .buttonStyle(.bordered)
 
                         Button("Nouvelle partie") {
+                            // Save all current players into profiles (ignore default names)
+                            for p in items {
+                                let trimmed = p.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmed.isEmpty { continue }
+                                // detect default "Joueur N"
+                                let parts = trimmed.split(separator: " ")
+                                var isDefault = false
+                                if parts.count == 2 {
+                                    let first = parts[0].lowercased()
+                                    let second = parts[1]
+                                    if first == "joueur" && second.allSatisfy({ $0.isNumber }) {
+                                        isDefault = true
+                                    }
+                                }
+                                if isDefault { continue }
+
+                                if let existing = profiles.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+                                    existing.lastPlayedAt = Date()
+                                    existing.playedCount += 1
+                                } else {
+                                    let profile = PlayerProfile(name: trimmed)
+                                    modelContext.insert(profile)
+                                }
+                            }
+
                             // Supprime les joueurs (retour à l'écran de démarrage)
                             items.forEach { modelContext.delete($0) }
                             try? modelContext.save()

@@ -19,7 +19,7 @@ struct ContentView: View {
 
     @State private var currentRound: Int = 1
     // Toggle state for the Vote / Fin de tour radio-like control
-    private enum TurnOption: String, CaseIterable, Identifiable {
+    enum TurnOption: String, CaseIterable, Identifiable {
         case vote = "Vote"
         case end = "Fin de tour"
         var id: Self { self }

@@ -136,13 +136,13 @@ struct PlayerDetailView: View {
         if let existing = existingProfiles.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
             existing.lastPlayedAt = Date()
             existing.playedCount += 1
-            do { try modelContext.save(); print("Updated PlayerProfile for \(trimmed)") }
-            catch { print("Failed to update PlayerProfile for \(trimmed): \(error)") }
+            do { try modelContext.save(); print("Updated PlayerProfile metadata for \(trimmed)") }
+            catch { print("Failed to update PlayerProfile metadata for \(trimmed): \(error)") }
         } else {
             let profile = PlayerProfile(name: trimmed)
             modelContext.insert(profile)
-            do { try modelContext.save(); print("Inserted PlayerProfile for \(trimmed)") }
-            catch { print("Failed to insert PlayerProfile for \(trimmed): \(error)") }
+            do { try modelContext.save(); print("Inserted PlayerProfile metadata for \(trimmed)") }
+            catch { print("Failed to insert PlayerProfile metadata for \(trimmed): \(error)") }
         }
     }
 }

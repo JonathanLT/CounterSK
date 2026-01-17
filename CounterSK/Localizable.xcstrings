@@ -20,6 +20,12 @@
         }
       }
     },
+    "(%lld parties)" : {
+
+    },
+    "(%lld)" : {
+
+    },
     "%lld" : {
       "localizations" : {
         "en" : {
@@ -211,6 +217,12 @@
         }
       }
     },
+    "Éditer" : {
+
+    },
+    "Enregistrer" : {
+
+    },
     "Fermer" : {
       "localizations" : {
         "en" : {
@@ -220,6 +232,12 @@
           }
         }
       }
+    },
+    "Gérer les profils" : {
+
+    },
+    "Gestion des profils" : {
+
     },
     "Informations" : {
       "localizations" : {
@@ -271,6 +289,9 @@
         }
       }
     },
+    "Le cumul de points sera remis à zéro pour ce profil." : {
+
+    },
     "Les 14" : {
       "localizations" : {
         "en" : {
@@ -280,6 +301,9 @@
           }
         }
       }
+    },
+    "Modifier le nom" : {
+
     },
     "Nom déjà utilisé" : {
 
@@ -293,6 +317,9 @@
           }
         }
       }
+    },
+    "Nom du profil" : {
+
     },
     "Nombre de joueurs" : {
       "localizations" : {
@@ -365,6 +392,12 @@
         }
       }
     },
+    "Réinitialiser" : {
+
+    },
+    "Réinitialiser le cumul ?" : {
+
+    },
     "Reprendre la précédente" : {
       "localizations" : {
         "en" : {
@@ -415,6 +448,9 @@
           }
         }
       }
+    },
+    "Top 5 des profils" : {
+
     },
     "Total de bonus:" : {
       "comment" : "Total bonus label",

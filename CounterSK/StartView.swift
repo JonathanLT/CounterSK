@@ -11,6 +11,11 @@ import SwiftData
 struct StartView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
+    // Query profiles sorted by cumulative points (descending) for the ranking
+    @Query(sort: [SortDescriptor(\PlayerProfile.cumulativePoints, order: .reverse)]) private var profiles: [PlayerProfile]
+
+    // State to present the profile manager sheet
+    @State private var showProfileManager: Bool = false
 
     @State private var navigateToMain: Bool = false
     @State private var showPlayerCountSheet: Bool = true
@@ -61,7 +66,40 @@ struct StartView: View {
                     .buttonStyle(.bordered)
                 }
 
+                // Show top N profiles by cumulative points (if any profiles exist)
+                if !profiles.isEmpty {
+                    let shown = Array(profiles.prefix(5))
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Top 5 des profils")
+                            .font(.headline)
+                            .padding(.top)
+
+                        ForEach(shown, id: \.name) { profile in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(profile.name)
+                                    Text("(\(profile.playedCount))")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Text("\(profile.cumulativePoints) pts")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.top)
+                }
+
                 Spacer()
+
+                // Button to open profile manager
+                Button(action: { showProfileManager = true }) {
+                    Text("Gérer les profils")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .padding(.bottom)
             }
             .padding()
             .navigationDestination(isPresented: $navigateToMain) {
@@ -120,6 +158,11 @@ struct StartView: View {
                 .padding()
                 .presentationDetents([.medium])
             }
+            // Profile manager sheet
+            .sheet(isPresented: $showProfileManager) {
+                ProfileManagerView()
+                    .environment(\.modelContext, modelContext)
+            }
         }
     }
 
@@ -145,5 +188,5 @@ struct StartView: View {
 
 #Preview {
     StartView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: [Item.self, PlayerProfile.self, GameRecord.self], inMemory: true)
 }

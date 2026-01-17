@@ -11,7 +11,6 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [SortDescriptor(\Item.order)]) private var items: [Item]
-    @Query(sort: [SortDescriptor(\PlayerProfile.lastPlayedAt, order: .reverse)]) private var profiles: [PlayerProfile]
     @Environment(\.editMode) private var editMode
     @Environment(\.dismiss) private var dismiss
 
@@ -63,62 +62,64 @@ struct ContentView: View {
         return "Tour n°\(round)"
     }
 
+    // Moved complex button action here to avoid compiler type-check complexity in the view body
+    private func handleTurnAction() {
+        if selectedTurnOption == .vote {
+            selectedTurnOption = .end
+            // Snapshot baseline points for live preview during end phase
+            var baseline: [ObjectIdentifier: Int] = [:]
+            for it in items {
+                baseline[ObjectIdentifier(it)] = it.points
+            }
+            pointsBaseline = baseline
+            // Ensure kraken starts unchecked when entering end phase
+            krakenDiscarded = false
+        } else {
+            // User is trying to validate the end-of-turn: check sum of tricksTaken
+            let totalTaken = items.reduce(0) { $0 + $1.tricksTaken }
+            // If Kraken is active, add +1 to the taken sum before validation
+            let adjustedTaken = totalTaken + (krakenDiscarded ? 1 : 0)
+            let expected = cardsForRound(currentRound)
+            if adjustedTaken == expected {
+                if currentRound < maxRoundsAllowed {
+                    // Apply final points for this round to each player (baseline + roundPoints)
+                    items.forEach { item in
+                        let baseline = pointsBaseline[ObjectIdentifier(item)] ?? item.points
+                        item.points = baseline + item.roundPoints(round: currentRound, planned: item.plannedTricks, taken: item.tricksTaken)
+                    }
+                    selectedTurnOption = .vote
+                    currentRound += 1
+                    // Reset plannedTricks and tricksTaken for the new round
+                    items.forEach { item in
+                        item.plannedTricks = 0
+                        item.tricksTaken = 0
+                    }
+                    // Clear baseline
+                    pointsBaseline = [:]
+                    // reset kraken for next rounds
+                    krakenDiscarded = false
+                    try? modelContext.save()
+                } else {
+                    // Final round: apply final points then show game over
+                    items.forEach { item in
+                        let baseline = pointsBaseline[ObjectIdentifier(item)] ?? item.points
+                        item.points = baseline + item.roundPoints(round: currentRound, planned: item.plannedTricks, taken: item.tricksTaken)
+                    }
+                    try? modelContext.save()
+                    showGameOver = true
+                }
+            } else {
+                // Show alert and block advancement
+                showValidationAlert = true
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Radio-like toggle button: alternates between Vote and Fin de tour
-                Button(action: {
-                    // Toggle the displayed option
-                    if selectedTurnOption == .vote {
-                        selectedTurnOption = .end
-                        // Snapshot baseline points for live preview during end phase
-                        var baseline: [ObjectIdentifier: Int] = [:]
-                        for it in items {
-                            baseline[ObjectIdentifier(it)] = it.points
-                        }
-                        pointsBaseline = baseline
-                        // Ensure kraken starts unchecked when entering end phase
-                        krakenDiscarded = false
-                    } else {
-                        // User is trying to validate the end-of-turn: check sum of tricksTaken
-                        let totalTaken = items.reduce(0) { $0 + $1.tricksTaken }
-                        // If Kraken is active, add +1 to the taken sum before validation
-                        let adjustedTaken = totalTaken + (krakenDiscarded ? 1 : 0)
-                        let expected = cardsForRound(currentRound)
-                        if adjustedTaken == expected {
-                            if currentRound < maxRoundsAllowed {
-                                // Apply final points for this round to each player (baseline + roundPoints)
-                                items.forEach { item in
-                                    let baseline = pointsBaseline[ObjectIdentifier(item)] ?? item.points
-                                    item.points = baseline + item.roundPoints(round: currentRound, planned: item.plannedTricks, taken: item.tricksTaken)
-                                }
-                                selectedTurnOption = .vote
-                                currentRound += 1
-                                // Reset plannedTricks and tricksTaken for the new round
-                                items.forEach { item in
-                                    item.plannedTricks = 0
-                                    item.tricksTaken = 0
-                                }
-                                // Clear baseline
-                                pointsBaseline = [:]
-                                // reset kraken for next rounds
-                                krakenDiscarded = false
-                                try? modelContext.save()
-                            } else {
-                                // Final round: apply final points then show game over
-                                items.forEach { item in
-                                    let baseline = pointsBaseline[ObjectIdentifier(item)] ?? item.points
-                                    item.points = baseline + item.roundPoints(round: currentRound, planned: item.plannedTricks, taken: item.tricksTaken)
-                                }
-                                try? modelContext.save()
-                                showGameOver = true
-                            }
-                        } else {
-                            // Show alert and block advancement
-                            showValidationAlert = true
-                        }
-                    }
-                }) {
+                Button(action: handleTurnAction) {
                     Text(selectedTurnOption.rawValue)
                         .font(.headline)
                         .foregroundColor(.white)
@@ -227,31 +228,6 @@ struct ContentView: View {
                         .buttonStyle(.bordered)
 
                         Button("Nouvelle partie") {
-                            // Save all current players into profiles (ignore default names)
-                            for p in items {
-                                let trimmed = p.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                                if trimmed.isEmpty { continue }
-                                // detect default "Joueur N"
-                                let parts = trimmed.split(separator: " ")
-                                var isDefault = false
-                                if parts.count == 2 {
-                                    let first = parts[0].lowercased()
-                                    let second = parts[1]
-                                    if first == "joueur" && second.allSatisfy({ $0.isNumber }) {
-                                        isDefault = true
-                                    }
-                                }
-                                if isDefault { continue }
-
-                                if let existing = profiles.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
-                                    existing.lastPlayedAt = Date()
-                                    existing.playedCount += 1
-                                } else {
-                                    let profile = PlayerProfile(name: trimmed)
-                                    modelContext.insert(profile)
-                                }
-                            }
-
                             // Supprime les joueurs (retour à l'écran de démarrage)
                             items.forEach { modelContext.delete($0) }
                             try? modelContext.save()
